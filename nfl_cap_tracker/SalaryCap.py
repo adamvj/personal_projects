@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import requests
+import time
+import random
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from io import StringIO
@@ -280,7 +282,10 @@ try:
                         get_team_real_data(team, year) # Prime the cache
                     except:
                         pass
+                    
+                    # Anti-throttling delay
                     progress_bar.progress((i + 1) / len(teams))
+                    time.sleep(random.uniform(1.5, 3.0))
                 
                 status.update(label="Calculation Complete!", state="complete", expanded=False)
             
