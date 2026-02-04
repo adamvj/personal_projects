@@ -23,7 +23,7 @@ def get_nfl_data(year):
         'Upgrade-Insecure-Requests': '1'
     }
     
-    response = requests.get(url, headers=headers, timeout=30)
+    response = requests.get(url, headers=headers, timeout=60)
     response.raise_for_status() # Raise an error for bad status codes
 
     soup = BeautifulSoup(response.content, 'html.parser')
@@ -119,7 +119,7 @@ def get_team_real_data(team_name, year):
     }
     
     try:
-        response = requests.get(url, headers=headers, timeout=30)
+        response = requests.get(url, headers=headers, timeout=60)
         response.raise_for_status()
         soup = BeautifulSoup(response.content, 'html.parser')
         tables = pd.read_html(StringIO(str(soup)))

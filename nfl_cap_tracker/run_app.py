@@ -8,7 +8,7 @@ def main():
     
     # Use relative path so it works in the repo
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    script_path = os.path.join(current_dir, "nfl_cap_tracker", "SalaryCap.py")
+    script_path = os.path.join(current_dir, "SalaryCap.py")
     
     # Construct the argv for streamlit run
     sys.argv = ["streamlit", "run", script_path]
