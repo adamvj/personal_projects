@@ -311,9 +311,8 @@ try:
             st.warning("Could not fetch detailed roster. Showing ESTIMATED data based on league averages.")
             # Fallback to Mock Logic
             raw_cap = clean_currency(team_data['Total Cap'])
-            team_pos_data = pd.DataFrame({
-                "Position": positions.keys(),
-                "Estimated Spend": [v * raw_cap for v in positions.values()],
+            team_pos_data = pd.DataFrame({"Position": positions.keys(), "Estimated Spend": [v * raw_cap for v in positions.values()]})
+
         col1, col2 = st.columns([1, 1])
         
         with col1:
