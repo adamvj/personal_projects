@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from io import StringIO
 from bs4 import BeautifulSoup
 import plotly.express as px
@@ -10,6 +12,17 @@ st.set_page_config(page_title="NFL Positional Cap Tracker", layout="wide")
 
 st.title("🏈 NFL Positional Spending Tracker")
 st.write("Data parsed from [Spotrac NFL Cap Tracker](https://www.spotrac.com/nfl/cap)")
+
+def create_session():
+    session = requests.Session()
+    retry = Retry(connect=3, backoff_factor=0.5)
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+    return session
+
+# Create a global session
+session = create_session()
 
 @st.cache_data(ttl=3600)
 def get_nfl_data(year):
@@ -23,7 +36,8 @@ def get_nfl_data(year):
         'Upgrade-Insecure-Requests': '1'
     }
     
-    response = requests.get(url, headers=headers, timeout=60)
+    # Increased timeout to 120s and use session with retries
+    response = session.get(url, headers=headers, timeout=120)
     response.raise_for_status() # Raise an error for bad status codes
 
     soup = BeautifulSoup(response.content, 'html.parser')
@@ -119,7 +133,8 @@ def get_team_real_data(team_name, year):
     }
     
     try:
-        response = requests.get(url, headers=headers, timeout=60)
+        # Use session with retries and longer timeout
+        response = session.get(url, headers=headers, timeout=120)
         response.raise_for_status()
         soup = BeautifulSoup(response.content, 'html.parser')
         tables = pd.read_html(StringIO(str(soup)))
