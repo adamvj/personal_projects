@@ -1,0 +1,17 @@
+# Virtual environments
+venv/
+env/
+.env
+
+# Logs
+cron.log
+*.log
+
+# Pycache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Mac OS
+.DS_Store
