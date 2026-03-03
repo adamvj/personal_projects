@@ -78,18 +78,20 @@ def check_pollen_levels_and_notify(data, city):
             message += f"• {name}: {count:.1f} grains/m³\n"
         message += "Consider staying inside or taking precautions!"
         
-        print("High pollen detected! Sending notification...")
-        send_ntfy_notification(message)
+        print("High pollen detected! Sending alert notification...")
+        send_ntfy_notification(message, title="(=_=) Pollen Alert", tags="warning,mask")
     else:
-        print(f"Pollen levels in {city} are currently below their sensitive thresholds. No notification needed.")
+        message = f"Pollen levels in {city} are currently low. It is safe to go outside and enjoy the day!"
+        print("Pollen is low! Sending safe notification...")
+        send_ntfy_notification(message, title="(^_^) All Clear!", tags="white_check_mark,sun_with_face")
 
-def send_ntfy_notification(message):
+def send_ntfy_notification(message, title="Pollen Update", tags="bell"):
     """Send a push notification via ntfy.sh."""
     url = f"https://ntfy.sh/{NTFY_TOPIC}"
     try:
         response = requests.post(url, 
                                  data=message.encode('utf-8'),
-                                 headers={"Title": "(=_=) Pollen Alert", "Tags": "warning,mask"})
+                                 headers={"Title": title, "Tags": tags})
         response.raise_for_status()
         print("Notification sent successfully.")
     except requests.RequestException as e:
