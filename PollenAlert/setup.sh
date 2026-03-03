@@ -52,9 +52,9 @@ cat <<EOF > "$PLIST_PATH"
     <key>WorkingDirectory</key>
     <string>$DIR</string>
     <key>StandardOutPath</key>
-    <string>$DIR/cron.log</string>
+    <string>/tmp/pollen_cron.log</string>
     <key>StandardErrorPath</key>
-    <string>$DIR/cron.log</string>
+    <string>/tmp/pollen_cron.log</string>
     <key>StartCalendarInterval</key>
     <array>
         <dict>
