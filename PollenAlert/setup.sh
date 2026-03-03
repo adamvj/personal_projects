@@ -24,20 +24,68 @@ pip install -r requirements.txt
 # Make the python script executable
 chmod +x pollen_alert.py
 
-# Setup Cron Jobs (Runs every day at 9:30 AM, 12 PM, and 5 PM)
-CRON_CMD_1="30 9 * * * cd $DIR && $DIR/venv/bin/python $DIR/pollen_alert.py > $DIR/cron.log 2>&1"
-CRON_CMD_2="0 12 * * * cd $DIR && $DIR/venv/bin/python $DIR/pollen_alert.py > $DIR/cron.log 2>&1"
-CRON_CMD_3="0 17 * * * cd $DIR && $DIR/venv/bin/python $DIR/pollen_alert.py > $DIR/cron.log 2>&1"
-
-# Check if cron job already exists and remove old ones to avoid duplicates
+# Remove legacy cron jobs if they exist
 if crontab -l 2>/dev/null | grep -q "$DIR/pollen_alert.py"; then
     echo "Removing legacy cron jobs..."
     crontab -l 2>/dev/null | grep -v "$DIR/pollen_alert.py" | crontab -
 fi
 
-echo "Adding cron jobs to run at 9:30 AM, 12:00 PM, and 5:00 PM daily..."
-(crontab -l 2>/dev/null; echo "$CRON_CMD_1"; echo "$CRON_CMD_2"; echo "$CRON_CMD_3") | crontab -
-echo "Cron jobs added successfully."
+# Setup LaunchAgent
+PLIST_PATH="$HOME/Library/LaunchAgents/com.adamvj.pollenalert.plist"
+
+echo "Configuring LaunchAgent for 9:30 AM, 12:00 PM, and 5:00 PM..."
+
+mkdir -p "$HOME/Library/LaunchAgents"
+
+cat <<EOF > "$PLIST_PATH"
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.adamvj.pollenalert</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>$DIR/venv/bin/python</string>
+        <string>$DIR/pollen_alert.py</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>$DIR</string>
+    <key>StandardOutPath</key>
+    <string>$DIR/cron.log</string>
+    <key>StandardErrorPath</key>
+    <string>$DIR/cron.log</string>
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict>
+            <key>Hour</key>
+            <integer>9</integer>
+            <key>Minute</key>
+            <integer>30</integer>
+        </dict>
+        <dict>
+            <key>Hour</key>
+            <integer>12</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+        <dict>
+            <key>Hour</key>
+            <integer>17</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+    </array>
+</dict>
+</plist>
+EOF
+
+# Unload just in case
+launchctl unload "$PLIST_PATH" 2>/dev/null || true
+# Load new agent
+launchctl load "$PLIST_PATH"
+
+echo "LaunchAgent installed successfully. It will now run even after your Mac wakes from sleep."
 
 echo ""
 echo "Setup complete! The pollen alert script will now run automatically."
