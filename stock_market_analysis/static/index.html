@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockView - Beginner Friendly Market Dashboard</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Zoom Plugin (Requires Hammer.js for panning/pinching) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="glass-panel">
+            <div class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 3v18h18" />
+                    <path d="m19 9-5 5-4-4-3 3" />
+                </svg>
+                <span>StockView</span>
+            </div>
+
+            <div class="search-container">
+                <input type="text" id="tickerInput"
+                    placeholder="Enter Ticker or Company Name (e.g. AAPL, Apple, Tesla)..." value="AAPL">
+                <button id="searchBtn" class="btn-primary">Analyze</button>
+                <button id="compareBtn" class="btn-secondary" style="margin-left: 8px;">+ Compare</button>
+            </div>
+
+            <!-- Active Tickers Chips Container -->
+            <div id="activeTickersContainer" class="active-tickers-container">
+                <!-- Chips injected here via JS -->
+            </div>
+        </header>
+
+        <main class="dashboard">
+            <!-- Loading State -->
+            <div id="loader" class="loader-container hidden">
+                <div class="spinner"></div>
+                <p>Fetching Real-Time Market Data...</p>
+            </div>
+
+            <div id="errorMsg" class="error-message hidden">
+                <p>Could not find data. Try another ticker.</p>
+            </div>
+
+            <!-- Dashboard Layout Wrapper -->
+            <div class="dashboard-layout hidden" id="dashboardLayout">
+
+                <!-- Left Sidebar: Competitors -->
+                <aside class="sidebar glass-panel">
+                    <h3>Similar Companies</h3>
+                    <div id="competitorsList" class="competitors-list">
+                        <!-- Competitor cards injected here -->
+                    </div>
+                </aside>
+
+                <!-- Main Content Container -->
+                <div id="contentOverview" class="content-grid">
+                    <!-- Top Section: Info & Price -->
+                    <section class="overview glass-panel">
+                        <div class="stock-header">
+                            <div>
+                                <h1 id="stockSymbol">AAPL</h1>
+                                <h2 id="stockName">Apple Inc.</h2>
+                                <span id="stockSector" class="badge">Technology</span>
+                            </div>
+                            <div class="price-info">
+                                <h1 id="currentPrice">$0.00</h1>
+                                <div id="priceChange" class="price-change positive">0.00 (0.00%)</div>
+                                <span class="ds-trend tooltip-wrapper" id="dsTrend"
+                                    data-tooltip="Predicted by Simple Moving Average crossover.">Bullish Trend ↑</span>
+                                <p id="dsTrendExplain" class="context-explain hidden"
+                                    style="text-align: right; max-width: 250px; margin-left: auto;"></p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Middle Section: Chart -->
+                    <section class="chart-container glass-panel">
+                        <div class="section-header"
+                            style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
+                            <div
+                                style="display: flex; justify-content: space-between; width: 100%; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <h3>Price History</h3>
+                                    <button id="resetZoomBtn" class="badge"
+                                        style="cursor: pointer; border: 1px solid rgba(255,255,255,0.2); outline: none; transition: background 0.2s; display: none;">Reset
+                                        Zoom & Pan</button>
+                                </div>
+                                <div class="timeframe-selector" id="timeframeSelector">
+                                    <button class="time-btn" data-period="1d">1D</button>
+                                    <button class="time-btn" data-period="1mo">1M</button>
+                                    <button class="time-btn" data-period="6mo">6M</button>
+                                    <button class="time-btn active" data-period="1y">1Y</button>
+                                    <button class="time-btn" data-period="5y">5Y</button>
+                                    <button class="time-btn" data-period="10y">10Y</button>
+                                    <button class="time-btn" data-period="max">Max</button>
+                                </div>
+                            </div>
+                            <div class="legend" style="margin-top: 0.5rem;">
+                                <span class="legend-item"><span class="color-box price-box"></span> Price</span>
+                                <span class="legend-item tooltip-wrapper"
+                                    data-tooltip="Simple Moving Average (20 Days) - Short term trend">
+                                    <span class="color-box sma20-box"></span> SMA 20 ⓘ
+                                </span>
+                                <span class="legend-item tooltip-wrapper"
+                                    data-tooltip="Simple Moving Average (50 Days) - Long term trend">
+                                    <span class="color-box sma50-box"></span> SMA 50 ⓘ
+                                </span>
+                            </div>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="stockChart"></canvas>
+                        </div>
+                    </section>
+
+                    <!-- Middle Row: Stats Grid -->
+                    <section class="stats-grid">
+                        <div class="stat-card glass-panel tooltip-wrapper"
+                            data-tooltip="Market Cap: The total dollar market value of a company's outstanding shares. It indicates the company's size.">
+                            <h4>Market Cap ⓘ</h4>
+                            <p id="marketCap">-</p>
+                            <span id="capContext" class="badge context-badge hidden"></span>
+                            <p id="capExplain" class="context-explain hidden"></p>
+                        </div>
+                        <div class="stat-card glass-panel tooltip-wrapper"
+                            data-tooltip="P/E Ratio: The ratio of a company's share price to its earnings per share. Helps determine if a stock is over/undervalued.">
+                            <h4>P/E Ratio ⓘ</h4>
+                            <p id="peRatio">-</p>
+                            <span id="peContext" class="badge context-badge hidden"></span>
+                            <p id="peExplain" class="context-explain hidden"></p>
+                        </div>
+                        <div class="stat-card glass-panel tooltip-wrapper"
+                            data-tooltip="Volume: The number of shares traded in a stock on a given day. High volume indicates high interest.">
+                            <h4>Volume Today ⓘ</h4>
+                            <p id="volumeToday">-</p>
+                            <span id="volContext" class="badge context-badge hidden"></span>
+                            <p id="volExplain" class="context-explain hidden"></p>
+                        </div>
+                        <div class="stat-card glass-panel tooltip-wrapper"
+                            data-tooltip="Dividend Yield: A financial ratio that shows how much a company pays out in dividends each year relative to its stock price.">
+                            <h4>Div Yield ⓘ</h4>
+                            <p id="divYield">-</p>
+                        </div>
+                        <div class="stat-card glass-panel tooltip-wrapper"
+                            data-tooltip="Dual-Layer Sentiment: Blends Micro (recent ticker news) with Macro (recent SPY market news). Hover below for breakdown.">
+                            <h4>Market Sentiment ⓘ</h4>
+                            <p id="marketSentiment">-</p>
+                            <span id="sentimentLabel" class="badge context-badge hidden"></span>
+                            <p id="sentimentExplain" class="context-explain hidden"></p>
+                        </div>
+                        <div class="stat-card glass-panel tooltip-wrapper"
+                            data-tooltip="52-Week Range: The highest and lowest price at which a stock has traded during the previous year.">
+                            <h4>52W High / Low ⓘ</h4>
+                            <p id="fiftyTwoWeekRange">-</p>
+                        </div>
+                    </section>
+
+                    <!-- Bottom Section: Tools & About -->
+                    <div class="bottom-grid">
+                        <section class="time-machine-card glass-panel" id="timeMachineSection">
+                            <h3>🕰️ What-If Time Machine</h3>
+                            <p class="section-desc">See how much money you'd have today if you invested in the past.</p>
+
+                            <div class="tm-controls">
+                                <div class="tm-input-group">
+                                    <label for="tmAmount">If I invested:</label>
+                                    <input type="number" id="tmAmount" value="1000" min="10" step="10">
+                                </div>
+                                <div class="tm-input-group">
+                                    <label for="tmDuration">Duration:</label>
+                                    <select id="tmDuration">
+                                        <option value="1">1 Month Ago</option>
+                                        <option value="3">3 Months Ago</option>
+                                        <option value="6">6 Months Ago</option>
+                                        <option value="12" selected>1 Year Ago</option>
+                                        <option value="60">5 Years Ago</option>
+                                        <option value="120">10 Years Ago</option>
+                                    </select>
+                                </div>
+                                <button id="tmCalculateBtn" class="btn-primary">Calculate</button>
+                            </div>
+
+                            <div id="tmResult" class="tm-result hidden">
+                                <!-- Results injected here via JS -->
+                            </div>
+                        </section>
+
+                        <section class="about-card glass-panel">
+                            <h3>About the Company</h3>
+                            <p id="companySummary">Loading company information...</p>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Main Logic -->
+    <script src="/static/js/app.js"></script>
+</body>
+
+</html>
