@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[modern dope] AI Assistant</title>
+    <!-- Add Google Fonts to match moderndope aesthetic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <!-- Chat Widget Container -->
+    <div id="md-chat-widget" class="md-chat-widget-closed">
+
+        <!-- Chat Button (Floating Action Button) -->
+        <button id="md-chat-toggle-btn" class="md-btn-pulse" aria-label="Toggle Chat">
+            <img src="floyd_avatar.png" alt="Chat with Floyd" class="md-chat-toggle-avatar">
+            <i class="fa-solid fa-times md-hidden"></i>
+        </button>
+
+        <!-- Chat Window -->
+        <div id="md-chat-window" class="md-hidden">
+
+            <!-- Header -->
+            <div class="md-chat-header">
+                <div class="md-chat-header-info">
+                    <img src="floyd_avatar.png" alt="Floyd Avatar" class="md-chat-logo"
+                        onerror="this.style.display='none'">
+                    <div>
+                        <h3>Floyd</h3>
+                        <p>Ask me anything about our services!</p>
+                    </div>
+                </div>
+                <button id="md-chat-close-btn" class="md-header-btn"><i class="fa-solid fa-chevron-down"></i></button>
+            </div>
+
+            <!-- Messages Area -->
+            <div id="md-chat-messages" class="md-chat-body">
+                <div class="md-message md-message-bot">
+                    <div class="md-message-content">
+                        Hey there! 👋 I'm the [modern dope] AI assistant. How can I help you today?
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="md-chat-footer">
+                <form id="md-chat-form">
+                    <button type="button" id="md-mic-btn" aria-label="Toggle Voice Control" title="Voice Chat">
+                        <i class="fa-solid fa-microphone"></i>
+                    </button>
+                    <input type="text" id="md-chat-input" placeholder="Type your question..." autocomplete="off"
+                        required>
+                    <button type="submit" id="md-chat-send-btn">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- For demonstration purposes only, usually embedded in another site -->
+    <div style="padding: 2rem; font-family: 'Inter', sans-serif;">
+        <h1>Widget Test Page</h1>
+        <p>The chatbot widget is fixed to the bottom right of the screen.</p>
+    </div>
+
+    <!-- FLOYD VOICE OVERLAY MODAL -->
+    <div id="floyd-voice-overlay" class="md-hidden">
+        <button id="floyd-close-btn" aria-label="Close Voice Chat">
+            <i class="fa-solid fa-times"></i>
+        </button>
+
+        <div class="floyd-content">
+            <h2 class="floyd-title">Floyd</h2>
+            <p class="floyd-subtitle" id="floyd-status-text">Listening...</p>
+
+            <!-- Orbit/Pulsing Animation Container -->
+            <div class="floyd-orb-container" id="floyd-orb-btn">
+                <div class="floyd-orb" id="floyd-main-orb"></div>
+                <div class="floyd-ring floyd-ring-1"></div>
+                <div class="floyd-ring floyd-ring-2"></div>
+                <!-- Microphone icon inside orb -->
+                <i class="fa-solid fa-microphone floyd-mic-icon"></i>
+            </div>
+
+            <!-- Realtime transcript display for voice mode -->
+            <div class="floyd-transcript-container">
+                <p id="floyd-transcript-text" class="floyd-transcript-text"></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="widget.js"></script>
+</body>
+
+</html>
