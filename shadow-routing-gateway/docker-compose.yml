@@ -1,0 +1,61 @@
+services:
+  # ---------------------------------------------------------------------------
+  # Mock Champion + Shadow model endpoints
+  # ---------------------------------------------------------------------------
+  mock-models:
+    build: .
+    command: uvicorn app.services.inference:app --host 0.0.0.0 --port 9000
+    environment:
+      MOCK_SHADOW_FAILURE_RATE: "0.05"
+      MOCK_SHADOW_DRIFT: "0.15"
+    ports:
+      - "9000:9000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9000/health', timeout=2)",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  # ---------------------------------------------------------------------------
+  # Shadow-routing inference gateway (client-facing)
+  # ---------------------------------------------------------------------------
+  gateway:
+    build: .
+    environment:
+      GATEWAY_CHAMPION_URL: http://mock-models:9000/champion/predict
+      GATEWAY_SHADOW_URL: http://mock-models:9000/shadow/predict
+      GATEWAY_DATABASE_URL: sqlite:////srv/data/shadow_metrics.db
+      GATEWAY_LOG_LEVEL: INFO
+      GATEWAY_SHADOW_SAMPLE_RATE: "1.0"
+    volumes:
+      - metrics-data:/srv/data
+    ports:
+      - "8000:8000"
+    depends_on:
+      mock-models:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # Streamlit observability dashboard
+  # ---------------------------------------------------------------------------
+  dashboard:
+    build: .
+    command: streamlit run dashboard.py --server.port 8501 --server.address 0.0.0.0 --server.headless true
+    environment:
+      GATEWAY_DATABASE_URL: sqlite:////srv/data/shadow_metrics.db
+    volumes:
+      - metrics-data:/srv/data
+    ports:
+      - "8501:8501"
+    depends_on:
+      - gateway
+
+volumes:
+  metrics-data:
